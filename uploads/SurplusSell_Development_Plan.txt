@@ -1,0 +1,2252 @@
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    SURPLUSSELL — PRODUCTION-READY                            ║
+║           COMPREHENSIVE DEVELOPMENT PLAN & BLUEPRINT                         ║
+║         Ethiopian Construction Surplus Marketplace Platform                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+EXECUTIVE SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+SurplusSell is a production-grade B2B marketplace platform designed to connect 
+construction material suppliers, contractors, and buyers in Ethiopia. The platform 
+facilitates the buying, selling, and trading of surplus construction materials 
+(cement, rebar, steel, lumber, aggregates, etc.) with built-in trust mechanisms, 
+verification systems, escrow payments, and logistics coordination.
+
+TARGET MARKET: Ethiopian construction industry (~$15B annual market)
+PRIMARY USERS: Contractors, material suppliers, construction firms, developers
+REVENUE MODEL: Transaction commission (5-8%), verification fees, subscriptions
+COMPETITIVE MOAT: Verification agent network + escrow trust + price transparency
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 1: PRODUCT ANALYSIS
+═══════════════════════════════════════════════════════════════════════════════
+
+1.1 IDEA ANALYSIS
+─────────────────
+CORE VALUE PROPOSITION:
+- Reduce construction waste by reselling surplus materials
+- Lower material costs for buyers (15-40% below retail)
+- Generate revenue for sellers from idle inventory
+- Create price transparency in Ethiopian construction market
+- Enable cross-city material trading (Addis -> Hawassa, etc.)
+
+MARKET OPPORTUNITY:
+- Ethiopia's construction sector is ~15% of GDP
+- ~30% of construction materials go unused or wasted
+- No dominant digital marketplace exists (2Merkato is directory-only)
+- SanduraCM is "coming soon" — first-mover advantage available
+- ~50,000+ active contractors in Addis Ababa alone
+
+1.2 MISSING FEATURES IN CURRENT MARKET
+────────────────────────────────────────
+- No escrow/payment protection for B2B transactions
+- No verification of material quality/quantity
+- No logistics coordination for heavy materials
+- No price index/transparency
+- No bulk dealer tools
+- No multi-language support (Amharic, Oromiffa, Tigrinya)
+- No offline capability for rural connectivity
+
+1.3 WEAK POINTS & RISKS
+────────────────────────
+RISK                              | MITIGATION STRATEGY
+─────────────────────────────────────────────────────────────
+Trust deficit (scams)            | Verification agents + escrow + ratings
+Payment fraud                    | Escrow only, no direct payments
+Low digital literacy               | Simple UI, phone-based auth, Amharic-first
+Logistics complexity              | Partner with trucking companies
+Regulatory (NBE)                   | Start with manual reconciliation, partner later
+Competition from 2Merkato          | Superior UX, escrow, verification
+Network effect (chicken-egg)      | Free listings Phase 1, verification incentives
+Data sovereignty (Ethiopian law)   | Host in Ethiopia, comply with ECA
+
+1.4 INNOVATIVE FEATURES
+────────────────────────
+- AI Price Recommendation: Suggest listing prices based on market data
+- Material Quality Scanner: AI-powered photo analysis for condition grading
+- Smart Matching: Auto-suggest buyers for new listings based on preferences
+- Bulk Import API: Allow large suppliers to upload inventory via CSV/API
+- Construction Project Integration: Link listings to active project needs
+- Carbon Credit Tracking: Quantify waste reduction for ESG reporting
+- Voice Search: Amharic voice search for low-literacy users
+- Offline Mode: Browse cached listings, queue actions for sync
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 2: USER ROLES & PERMISSION SYSTEM
+═══════════════════════════════════════════════════════════════════════════════
+
+2.1 ROLE DEFINITIONS
+────────────────────
+
+ROLE: GUEST (Unauthenticated)
+Responsibilities: Browse public listings, view basic seller info
+Permissions:
+  - GET /api/v1/listings (public fields only)
+  - GET /api/v1/listings/{id} (public view)
+  - GET /api/v1/categories
+  - POST /api/v1/auth/register
+  - POST /api/v1/auth/login
+Dashboard: None (redirect to login for protected actions)
+Security: Rate limited 30 req/min, no PII access
+
+ROLE: BUYER
+Responsibilities: Browse, search, negotiate, purchase materials
+Permissions:
+  - All Guest permissions
+  - GET /api/v1/listings/search (full search with filters)
+  - POST /api/v1/conversations (initiate chat with seller)
+  - GET/POST /api/v1/conversations/{id}/messages
+  - POST /api/v1/transactions (create purchase order)
+  - GET /api/v1/transactions/my (as buyer)
+  - POST /api/v1/payments/initiate
+  - POST /api/v1/payments/{id}/confirm
+  - POST /api/v1/ratings (rate seller after transaction)
+  - GET /api/v1/sellers/{id}/profile
+  - POST /api/v1/watchlist
+  - GET /api/v1/notifications
+  - PUT /api/v1/users/me
+Dashboard:
+  - Browse/Search Listings (grid/map view)
+  - My Watchlist
+  - My Conversations
+  - My Transactions (buyer view)
+  - Payment History
+  - Ratings Given
+Security: JWT required, MFA optional, rate limit 100 req/min
+
+ROLE: SELLER
+Responsibilities: Create listings, manage inventory, fulfill orders
+Permissions:
+  - All Buyer permissions
+  - POST /api/v1/listings (create new listing)
+  - PUT/DELETE /api/v1/listings/{id} (edit/delete own listings)
+  - GET /api/v1/listings/my (seller's own listings)
+  - PUT /api/v1/transactions/{id}/accept/reject/ship
+  - GET /api/v1/analytics/sales
+  - GET /api/v1/payments/escrow
+  - POST /api/v1/verification/request
+Dashboard:
+  - My Listings (CRUD, analytics)
+  - Sales Analytics (revenue, views, conversion)
+  - Incoming Orders (accept/reject/ship)
+  - Escrow Status (pending releases)
+  - Verification Requests
+  - Seller Rating & Reviews
+Security: JWT + phone verified, listing value limits for new sellers
+Approval: Auto-approved for listings < 10,000 ETB, manual for higher
+
+ROLE: VERIFICATION_AGENT
+Responsibilities: Physically inspect listings, verify quality/quantity
+Permissions:
+  - GET /api/v1/verification/assigned
+  - GET /api/v1/verification/{id}
+  - POST /api/v1/verification/{id}/submit
+  - POST /api/v1/verification/{id}/photos
+  - GET /api/v1/listings/{id} (full details)
+  - PUT /api/v1/verification/{id}/status
+Dashboard:
+  - Assigned Inspections Queue
+  - Inspection Form (photos, GPS, notes, condition grade)
+  - Inspection History
+  - Performance Metrics (inspections/day, accuracy score)
+Security: GPS tracking during inspections, photo EXIF verification
+Approval: Background check + training + NDA required
+
+ROLE: DELIVERY_AGENT
+Responsibilities: Pick up and deliver materials, capture signatures
+Permissions:
+  - GET /api/v1/delivery/assigned
+  - PUT /api/v1/delivery/{id}/accept/pickup/deliver
+  - GET /api/v1/delivery/history
+  - POST /api/v1/delivery/{id}/signature
+Dashboard:
+  - Available Delivery Jobs (nearby, with earnings)
+  - Active Deliveries (GPS tracking, route)
+  - Delivery History & Earnings
+  - Performance Rating
+Security: Vehicle inspection required, insurance verification
+Approval: Vehicle docs + insurance + background check
+
+ROLE: ADMIN
+Responsibilities: Moderate content, handle disputes, manage users
+Permissions:
+  - All Buyer/Seller permissions
+  - GET/PUT /api/v1/admin/users
+  - GET/PUT /api/v1/admin/listings
+  - GET/PUT /api/v1/admin/transactions
+  - GET/PUT /api/v1/admin/verification
+  - GET /api/v1/admin/reports
+  - GET /api/v1/admin/audit-logs
+Dashboard:
+  - User Management (CRUD, suspend, roles)
+  - Listing Moderation (approve, flag, remove)
+  - Transaction Monitoring (disputes, refunds)
+  - Verification Queue Management
+  - Analytics & Reports (KPIs, revenue, growth)
+  - Audit Logs (immutable, searchable)
+Security: MFA mandatory, IP whitelist, session timeout 15min
+Approval: Internal hire only, background check, dual-auth for sensitive
+
+ROLE: SUPER_ADMIN
+Responsibilities: System configuration, agent onboarding, financial ops
+Permissions:
+  - All Admin permissions
+  - POST/PUT /api/v1/admin/agents
+  - GET /api/v1/admin/finance/reconciliation
+  - POST /api/v1/admin/escrow/release (requires dual auth)
+  - GET/PUT /api/v1/admin/system/config
+  - GET/PUT /api/v1/admin/commission/settings
+  - GET/POST /api/v1/admin/backups
+Dashboard:
+  - Agent Onboarding & Management
+  - Financial Operations (reconciliation, escrow release)
+  - System Configuration (feature flags, rates)
+  - Commission Settings
+  - Backup & Disaster Recovery
+  - API Keys & Integrations
+Security: MFA mandatory, hardware token preferred, dual-auth all financial
+Approval: C-level only, 4-eyes principle for all financial operations
+
+2.2 RBAC MATRIX
+───────────────
+                        | Guest | Buyer | Seller | V-Agent | D-Agent | Admin | Super
+─────────────────────────────────────────────────────────────────────────────────
+Browse Listings         |   Y   |   Y   |   Y    |    Y    |    Y    |   Y   |   Y
+Search Listings         |   Y   |   Y   |   Y    |    Y    |    Y    |   Y   |   Y
+Create Listing          |   N   |   N   |   Y    |    N    |    N    |   Y   |   Y
+Edit Own Listing        |   N   |   N   |   Y    |    N    |    N    |   Y   |   Y
+Edit Any Listing        |   N   |   N   |   N    |    N    |    N    |   Y   |   Y
+Delete Own Listing      |   N   |   N   |   Y    |    N    |    N    |   Y   |   Y
+Initiate Chat           |   N   |   Y   |   Y    |    N    |    N    |   Y   |   Y
+Create Transaction      |   N   |   Y   |   N    |    N    |    N    |   Y   |   Y
+Accept Transaction      |   N   |   N   |   Y    |    N    |    N    |   Y   |   Y
+Initiate Payment        |   N   |   Y   |   N    |    N    |    N    |   Y   |   Y
+Release Escrow          |   N   |   N   |   N    |    N    |    N    |   N   |   Y*
+Request Verification    |   N   |   N   |   Y    |    N    |    N    |   Y   |   Y
+Perform Inspection      |   N   |   N   |   N    |    Y    |    N    |   N   |   N
+Accept Delivery         |   N   |   N   |   N    |    N    |    Y    |   N   |   N
+Moderate Users          |   N   |   N   |   N    |    N    |    N    |   Y   |   Y
+View Audit Logs         |   N   |   N   |   N    |    N    |    N    |   Y   |   Y
+System Config           |   N   |   N   |   N    |    N    |    N    |   N   |   Y
+
+* Requires dual authorization (4-eyes principle)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 3: COMPLETE SYSTEM FEATURES
+═══════════════════════════════════════════════════════════════════════════════
+
+3.1 CORE FEATURES (MUST-HAVE FOR LAUNCH)
+──────────────────────────────────────────
+
+F1. USER MANAGEMENT & AUTHENTICATION
+    - Phone number registration with SMS OTP
+    - Password with complexity requirements (BCrypt cost 12)
+    - JWT access token (15min) + refresh token (7 days)
+    - Multi-factor authentication (SMS or TOTP)
+    - Account lockout after 5 failed attempts (30min)
+    - Session management with Redis
+    - Password reset via SMS + email confirmation
+    - Profile management (name, company, address, bank details)
+    - KYC document upload (business license, TIN)
+    - Role assignment and upgrade requests
+
+F2. LISTING MANAGEMENT
+    - Create listing with photos (max 10, 5MB each)
+    - Rich description with material specs
+    - Categorization (cement, rebar, steel, lumber, aggregate, etc.)
+    - Condition grading (New, Like New, Good, Fair, Salvage)
+    - Quantity and unit specification
+    - Location with GPS coordinates
+    - Price (fixed or negotiable)
+    - Bulk pricing tiers
+    - Listing expiration (30 days default, auto-renew option)
+    - Draft mode (save without publishing)
+    - Image compression and watermarking
+    - EXIF data stripping for privacy
+
+F3. SEARCH & DISCOVERY
+    - Full-text search with Elasticsearch
+    - Faceted search (category, price, location, condition, quantity)
+    - Geospatial search (radius around location)
+    - Sort by relevance, price, date, distance
+    - Auto-suggest and spell correction
+    - Saved searches with email alerts
+    - Price range histogram
+    - Recently viewed listings
+    - Trending listings
+    - Voice search (Amharic support)
+
+F4. MESSAGING SYSTEM
+    - Real-time chat via WebSocket
+    - Conversation history (PostgreSQL)
+    - Message read receipts
+    - Photo sharing in chat
+    - Message encryption at rest
+    - Phone number masking (privacy protection)
+    - Offline message queue (sync when online)
+    - Push notifications for new messages
+    - Block/report user functionality
+    - Admin moderation of conversations
+
+F5. TRANSACTION & ORDER MANAGEMENT
+    - Create purchase order from listing
+    - Negotiation workflow (counter-offers)
+    - Order state machine:
+      NEGOTIATING -> PAYMENT_PENDING -> PAID -> DELIVERING -> DELIVERED -> COMPLETED
+                           -> CANCELLED
+                           -> DISPUTED -> RESOLVED/REFUNDED
+    - Transaction history for buyer and seller
+    - Receipt generation (PDF)
+    - Invoice management
+    - Dispute flagging and resolution workflow
+    - Auto-cancel on payment timeout (24h)
+
+F6. MOCK PAYMENT & ESCROW SYSTEM
+    - Mock Telebirr gateway (simulates real payment flow)
+    - Payment initiation with mock QR code
+    - Auto-confirmation in dev mode (configurable delay)
+    - Escrow state machine:
+      PENDING -> HELD -> RELEASED
+              -> REFUNDED
+              -> DISPUTED -> RELEASED/REFUNDED
+              -> AUTO_REFUNDED (7-day timeout)
+    - Commission auto-deduction (5-8%, min 200 ETB)
+    - Daily reconciliation report
+    - Transaction idempotency (prevent double-charge)
+    - Refund processing
+    - Payment receipt generation
+
+F7. VERIFICATION SYSTEM
+    - Seller verification (ID, business license, address)
+    - Listing verification (physical inspection by agent)
+    - "Verified" badge on listings and profiles
+    - Verification agent assignment
+    - Photo + GPS proof of inspection
+    - Condition grading by agent
+    - Verification report generation
+    - Re-verification on listing renewal
+
+F8. RATING & REVIEW SYSTEM
+    - Buyer rates seller (1-5 stars + text review)
+    - Seller rates buyer
+    - Rating categories: communication, accuracy, delivery
+    - Weighted rating (recent ratings weighted higher)
+    - Review moderation (flag inappropriate content)
+    - Public rating display on profiles
+    - Minimum transactions before rating visible
+
+F9. NOTIFICATION SYSTEM
+    - Push notifications (Firebase Cloud Messaging)
+    - SMS notifications (Telebirr or other provider)
+    - Email notifications (SendGrid/AWS SES)
+    - In-app notification center
+    - Notification preferences (per channel, per event type)
+    - Notification templates (multilingual)
+    - Batch notification processing
+
+F10. ADMIN DASHBOARD
+    - User management (view, suspend, delete)
+    - Listing moderation (approve, reject, flag)
+    - Transaction monitoring
+    - Dispute resolution interface
+    - Verification queue management
+    - Analytics and reporting
+    - Audit log viewer
+    - System health monitoring
+
+3.2 ADVANCED FEATURES (PHASE 2+)
+─────────────────────────────────
+
+F11. DELIVERY & LOGISTICS
+    - Delivery agent matching (like ride-hailing)
+    - GPS tracking of deliveries
+    - Route optimization
+    - Digital signature capture
+    - Delivery photo proof
+    - Delivery fee calculation (distance-based)
+    - Insurance for high-value deliveries
+
+F12. PRICE INDEX & ANALYTICS
+    - Real-time price index by material category
+    - Historical price trends
+    - Market insights dashboard
+    - Price alert subscriptions
+    - Export data (CSV/PDF)
+    - API access for enterprise customers
+
+F13. BULK DEALER SUBSCRIPTIONS
+    - Tiered subscription plans
+    - Priority listing placement
+    - Bulk upload via CSV/API
+    - Advanced analytics
+    - Dedicated support
+    - API access
+
+F14. AI FEATURES
+    - AI price recommendation for new listings
+    - Image quality scoring
+    - Smart buyer-seller matching
+    - Chat sentiment analysis
+    - Fraud detection (anomaly detection)
+    - Demand forecasting
+
+F15. MOBILE APP FEATURES
+    - Biometric authentication
+    - Offline browsing (cached listings)
+    - Background sync
+    - Camera integration for quick listing
+    - Voice search
+    - Push notifications
+    - Certificate pinning
+    - Root/jailbreak detection
+
+3.3 FEATURE PRIORITIZATION MATRIX
+───────────────────────────────────
+Feature                    | Priority | Phase | Effort | Impact
+─────────────────────────────────────────────────────────────────
+User Auth & Registration   | P0       | 1     | Medium | High
+Listing CRUD               | P0       | 1     | Medium | High
+Search & Discovery         | P0       | 1     | High   | High
+Messaging                  | P0       | 1     | High   | High
+Mock Payment & Escrow      | P0       | 1     | High   | Critical
+Verification System        | P0       | 1     | High   | High
+Rating & Reviews          | P1       | 2     | Medium | Medium
+Admin Dashboard            | P0       | 1     | Medium | High
+Notifications             | P1       | 2     | Medium | Medium
+Delivery & Logistics      | P2       | 3     | High   | Medium
+Price Index               | P2       | 3     | Medium | Low
+Bulk Subscriptions        | P2       | 3     | Medium | Medium
+AI Features               | P3       | 4     | High   | Medium
+Mobile App (Full)         | P1       | 2     | High   | High
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 4: DATABASE DESIGN
+═══════════════════════════════════════════════════════════════════════════════
+
+4.1 ENTITY RELATIONSHIP DIAGRAM (CONCEPTUAL)
+──────────────────────────────────────────────
+
+[Users] 1---* [Listings]
+[Users] 1---* [Conversations] *---* [Messages]
+[Users] 1---* [Transactions]
+[Users] 1---* [Ratings]
+[Users] 1---* [VerificationRequests]
+[Users] 1---* [DeliveryJobs]
+[Listings] 1---* [ListingImages]
+[Listings] 1---* [Transactions]
+[Transactions] 1---1 [Payments]
+[Transactions] 1---1 [Escrows]
+[Transactions] 1---* [DeliveryJobs]
+[Users] 1---* [Notifications]
+[Users] 1---* [AuditLogs]
+[Categories] 1---* [Listings]
+[Locations] 1---* [Listings]
+[Agents] 1---* [VerificationRequests]
+[Agents] 1---* [DeliveryJobs]
+
+4.2 COMPLETE SCHEMA DEFINITION
+────────────────────────────────
+
+-- ============================================================
+-- CORE TABLES
+-- ============================================================
+
+CREATE TABLE users (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    phone_number        VARCHAR(20) NOT NULL UNIQUE,
+    email               VARCHAR(255) UNIQUE,
+    password_hash       VARCHAR(255) NOT NULL,
+    full_name           VARCHAR(255) NOT NULL,
+    company_name        VARCHAR(255),
+    tin_number          VARCHAR(50),
+    business_license    VARCHAR(255),
+    profile_image_url   VARCHAR(500),
+    role                VARCHAR(50) NOT NULL DEFAULT 'BUYER' 
+                        CHECK (role IN ('GUEST','BUYER','SELLER','VERIFICATION_AGENT','DELIVERY_AGENT','ADMIN','SUPER_ADMIN')),
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING_VERIFICATION' 
+                        CHECK (status IN ('PENDING_VERIFICATION','ACTIVE','SUSPENDED','BANNED','DELETED')),
+    kyc_status          VARCHAR(20) NOT NULL DEFAULT 'UNVERIFIED'
+                        CHECK (kyc_status IN ('UNVERIFIED','PENDING','VERIFIED','REJECTED')),
+    mfa_enabled         BOOLEAN DEFAULT FALSE,
+    mfa_secret          VARCHAR(255),
+    failed_login_attempts INTEGER DEFAULT 0,
+    locked_until        TIMESTAMP,
+    last_login_at       TIMESTAMP,
+    last_login_ip       INET,
+    email_verified      BOOLEAN DEFAULT FALSE,
+    phone_verified      BOOLEAN DEFAULT FALSE,
+    rating_avg          DECIMAL(2,1) DEFAULT 0.0 CHECK (rating_avg >= 0 AND rating_avg <= 5),
+    rating_count        INTEGER DEFAULT 0,
+    total_transactions  INTEGER DEFAULT 0,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    deleted_at          TIMESTAMP,
+    created_by          UUID REFERENCES users(id),
+    updated_by          UUID REFERENCES users(id)
+);
+
+CREATE INDEX idx_users_phone ON users(phone_number);
+CREATE INDEX idx_users_role ON users(role);
+CREATE INDEX idx_users_status ON users(status);
+CREATE INDEX idx_users_kyc ON users(kyc_status);
+CREATE INDEX idx_users_created_at ON users(created_at);
+
+-- ============================================================
+-- CATEGORIES
+-- ============================================================
+
+CREATE TABLE categories (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name_en         VARCHAR(100) NOT NULL,
+    name_am         VARCHAR(100),
+    name_or         VARCHAR(100),
+    name_ti         VARCHAR(100),
+    slug            VARCHAR(100) NOT NULL UNIQUE,
+    description     TEXT,
+    parent_id       UUID REFERENCES categories(id),
+    icon_url        VARCHAR(500),
+    sort_order      INTEGER DEFAULT 0,
+    is_active       BOOLEAN DEFAULT TRUE,
+    metadata        JSONB,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_categories_parent ON categories(parent_id);
+CREATE INDEX idx_categories_slug ON categories(slug);
+CREATE INDEX idx_categories_active ON categories(is_active);
+
+-- ============================================================
+-- LOCATIONS
+-- ============================================================
+
+CREATE TABLE locations (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name            VARCHAR(255) NOT NULL,
+    region          VARCHAR(100) NOT NULL,
+    zone            VARCHAR(100),
+    woreda          VARCHAR(100),
+    city            VARCHAR(100),
+    latitude        DECIMAL(10,8),
+    longitude       DECIMAL(11,8),
+    geo_point       GEOGRAPHY(POINT,4326),
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_locations_geo ON locations USING GIST(geo_point);
+CREATE INDEX idx_locations_region ON locations(region);
+CREATE INDEX idx_locations_city ON locations(city);
+
+-- ============================================================
+-- LISTINGS
+-- ============================================================
+
+CREATE TABLE listings (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    seller_id           UUID NOT NULL REFERENCES users(id),
+    title               VARCHAR(255) NOT NULL,
+    description         TEXT NOT NULL,
+    category_id         UUID NOT NULL REFERENCES categories(id),
+    condition           VARCHAR(20) NOT NULL 
+                        CHECK (condition IN ('NEW','LIKE_NEW','GOOD','FAIR','SALVAGE')),
+    quantity            DECIMAL(15,3) NOT NULL,
+    unit                VARCHAR(50) NOT NULL,
+    price_per_unit      DECIMAL(15,2) NOT NULL,
+    total_price         DECIMAL(15,2) NOT NULL,
+    currency            VARCHAR(3) NOT NULL DEFAULT 'ETB',
+    is_negotiable       BOOLEAN DEFAULT TRUE,
+    min_price           DECIMAL(15,2),
+    location_id         UUID REFERENCES locations(id),
+    address             TEXT,
+    latitude            DECIMAL(10,8),
+    longitude           DECIMAL(11,8),
+    geo_point           GEOGRAPHY(POINT,4326),
+    status              VARCHAR(20) NOT NULL DEFAULT 'DRAFT'
+                        CHECK (status IN ('DRAFT','PENDING_APPROVAL','ACTIVE','SOLD','EXPIRED','REJECTED','SUSPENDED','DELETED')),
+    verification_status VARCHAR(20) NOT NULL DEFAULT 'UNVERIFIED'
+                        CHECK (verification_status IN ('UNVERIFIED','PENDING','VERIFIED','REJECTED')),
+    view_count          INTEGER DEFAULT 0,
+    inquiry_count       INTEGER DEFAULT 0,
+    expires_at          TIMESTAMP NOT NULL,
+    featured_until      TIMESTAMP,
+    is_featured         BOOLEAN DEFAULT FALSE,
+    tags                TEXT[],
+    metadata            JSONB,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    published_at        TIMESTAMP,
+    deleted_at          TIMESTAMP
+);
+
+CREATE INDEX idx_listings_seller ON listings(seller_id);
+CREATE INDEX idx_listings_category ON listings(category_id);
+CREATE INDEX idx_listings_status ON listings(status);
+CREATE INDEX idx_listings_verification ON listings(verification_status);
+CREATE INDEX idx_listings_geo ON listings USING GIST(geo_point);
+CREATE INDEX idx_listings_price ON listings(price_per_unit);
+CREATE INDEX idx_listings_created ON listings(created_at);
+CREATE INDEX idx_listings_expires ON listings(expires_at);
+CREATE INDEX idx_listings_featured ON listings(is_featured) WHERE is_featured = TRUE;
+CREATE INDEX idx_listings_tags ON listings USING GIN(tags);
+CREATE INDEX idx_listings_search ON listings USING GIN(to_tsvector('english', title || ' ' || COALESCE(description, '')));
+
+-- ============================================================
+-- LISTING IMAGES
+-- ============================================================
+
+CREATE TABLE listing_images (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id      UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+    image_url       VARCHAR(500) NOT NULL,
+    thumbnail_url   VARCHAR(500),
+    sort_order      INTEGER DEFAULT 0,
+    is_primary      BOOLEAN DEFAULT FALSE,
+    file_size       INTEGER,
+    mime_type       VARCHAR(50),
+    width           INTEGER,
+    height          INTEGER,
+    exif_data       JSONB,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_listing_images_listing ON listing_images(listing_id);
+CREATE INDEX idx_listing_images_primary ON listing_images(listing_id, is_primary);
+
+-- ============================================================
+-- CONVERSATIONS & MESSAGES
+-- ============================================================
+
+CREATE TABLE conversations (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id      UUID REFERENCES listings(id),
+    buyer_id        UUID NOT NULL REFERENCES users(id),
+    seller_id       UUID NOT NULL REFERENCES users(id),
+    status          VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+                    CHECK (status IN ('ACTIVE','BLOCKED','ARCHIVED')),
+    last_message_at TIMESTAMP,
+    unread_count_buyer INTEGER DEFAULT 0,
+    unread_count_seller INTEGER DEFAULT 0,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE(listing_id, buyer_id, seller_id)
+);
+
+CREATE INDEX idx_conversations_buyer ON conversations(buyer_id);
+CREATE INDEX idx_conversations_seller ON conversations(seller_id);
+CREATE INDEX idx_conversations_listing ON conversations(listing_id);
+CREATE INDEX idx_conversations_last_msg ON conversations(last_message_at);
+
+CREATE TABLE messages (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    sender_id       UUID NOT NULL REFERENCES users(id),
+    content         TEXT NOT NULL,
+    message_type    VARCHAR(20) DEFAULT 'TEXT'
+                    CHECK (message_type IN ('TEXT','IMAGE','LOCATION','OFFER','SYSTEM')),
+    attachment_url  VARCHAR(500),
+    is_read         BOOLEAN DEFAULT FALSE,
+    read_at         TIMESTAMP,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_messages_conversation ON messages(conversation_id);
+CREATE INDEX idx_messages_sender ON messages(sender_id);
+CREATE INDEX idx_messages_created ON messages(created_at);
+
+-- ============================================================
+-- TRANSACTIONS
+-- ============================================================
+
+CREATE TABLE transactions (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id          UUID NOT NULL REFERENCES listings(id),
+    buyer_id            UUID NOT NULL REFERENCES users(id),
+    seller_id           UUID NOT NULL REFERENCES users(id),
+    quantity            DECIMAL(15,3) NOT NULL,
+    unit_price          DECIMAL(15,2) NOT NULL,
+    total_amount        DECIMAL(15,2) NOT NULL,
+    commission_amount   DECIMAL(15,2) NOT NULL DEFAULT 0,
+    net_amount          DECIMAL(15,2) NOT NULL,
+    currency            VARCHAR(3) NOT NULL DEFAULT 'ETB',
+    status              VARCHAR(30) NOT NULL DEFAULT 'NEGOTIATING'
+                        CHECK (status IN ('NEGOTIATING','PAYMENT_PENDING','PAID','DELIVERING','DELIVERED','COMPLETED','CANCELLED','DISPUTED','REFUNDED')),
+    delivery_method     VARCHAR(20) DEFAULT 'PICKUP'
+                        CHECK (delivery_method IN ('PICKUP','DELIVERY_AGENT','SELF_ARRANGED')),
+    delivery_address    TEXT,
+    notes               TEXT,
+    dispute_reason      TEXT,
+    dispute_resolved_at TIMESTAMP,
+    dispute_resolved_by UUID REFERENCES users(id),
+    completed_at        TIMESTAMP,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_transactions_buyer ON transactions(buyer_id);
+CREATE INDEX idx_transactions_seller ON transactions(seller_id);
+CREATE INDEX idx_transactions_listing ON transactions(listing_id);
+CREATE INDEX idx_transactions_status ON transactions(status);
+CREATE INDEX idx_transactions_created ON transactions(created_at);
+
+-- ============================================================
+-- PAYMENTS
+-- ============================================================
+
+CREATE TABLE payments (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_id      UUID NOT NULL UNIQUE REFERENCES transactions(id),
+    payer_id            UUID NOT NULL REFERENCES users(id),
+    payee_id            UUID NOT NULL REFERENCES users(id),
+    amount              DECIMAL(15,2) NOT NULL,
+    commission_amount   DECIMAL(15,2) NOT NULL DEFAULT 0,
+    currency            VARCHAR(3) NOT NULL DEFAULT 'ETB',
+    payment_method      VARCHAR(50) NOT NULL
+                        CHECK (payment_method IN ('TELEBIRR_MOCK','TELEBIRR','BANK_TRANSFER','CASH')),
+    gateway_reference   VARCHAR(255),
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+                        CHECK (status IN ('PENDING','PROCESSING','SUCCESS','FAILED','REFUNDED','TIMEOUT')),
+    idempotency_key     VARCHAR(255) NOT NULL UNIQUE,
+    metadata            JSONB,
+    initiated_at        TIMESTAMP NOT NULL DEFAULT NOW(),
+    completed_at        TIMESTAMP,
+    refunded_at         TIMESTAMP,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_payments_transaction ON payments(transaction_id);
+CREATE INDEX idx_payments_payer ON payments(payer_id);
+CREATE INDEX idx_payments_status ON payments(status);
+CREATE INDEX idx_payments_idempotency ON payments(idempotency_key);
+
+-- ============================================================
+-- ESCROWS
+-- ============================================================
+
+CREATE TABLE escrows (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_id      UUID NOT NULL UNIQUE REFERENCES transactions(id),
+    payment_id          UUID NOT NULL REFERENCES payments(id),
+    amount              DECIMAL(15,2) NOT NULL,
+    commission_amount   DECIMAL(15,2) NOT NULL DEFAULT 0,
+    net_amount          DECIMAL(15,2) NOT NULL,
+    currency            VARCHAR(3) NOT NULL DEFAULT 'ETB',
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+                        CHECK (status IN ('PENDING','HELD','RELEASED','REFUNDED','DISPUTED','AUTO_REFUNDED')),
+    hold_until          TIMESTAMP,
+    released_at         TIMESTAMP,
+    released_by         UUID REFERENCES users(id),
+    second_approver     UUID REFERENCES users(id),
+    refund_reason       TEXT,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_escrows_transaction ON escrows(transaction_id);
+CREATE INDEX idx_escrows_status ON escrows(status);
+CREATE INDEX idx_escrows_hold_until ON escrows(hold_until);
+
+-- ============================================================
+-- VERIFICATION REQUESTS
+-- ============================================================
+
+CREATE TABLE verification_requests (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    listing_id          UUID NOT NULL REFERENCES listings(id),
+    seller_id           UUID NOT NULL REFERENCES users(id),
+    agent_id            UUID REFERENCES users(id),
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+                        CHECK (status IN ('PENDING','ASSIGNED','IN_PROGRESS','COMPLETED','REJECTED')),
+    inspection_notes    TEXT,
+    condition_verified  VARCHAR(20),
+    quantity_verified   DECIMAL(15,3),
+    gps_latitude        DECIMAL(10,8),
+    gps_longitude       DECIMAL(11,8),
+    inspection_photos   JSONB,
+    completed_at        TIMESTAMP,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_verification_listing ON verification_requests(listing_id);
+CREATE INDEX idx_verification_agent ON verification_requests(agent_id);
+CREATE INDEX idx_verification_status ON verification_requests(status);
+
+-- ============================================================
+-- RATINGS
+-- ============================================================
+
+CREATE TABLE ratings (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_id  UUID NOT NULL REFERENCES transactions(id),
+    rater_id        UUID NOT NULL REFERENCES users(id),
+    ratee_id        UUID NOT NULL REFERENCES users(id),
+    rating          INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    review          TEXT,
+    categories      JSONB,
+    is_visible      BOOLEAN DEFAULT TRUE,
+    moderated_at    TIMESTAMP,
+    moderated_by    UUID REFERENCES users(id),
+    moderation_note TEXT,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_ratings_ratee ON ratings(ratee_id);
+CREATE INDEX idx_ratings_transaction ON ratings(transaction_id);
+CREATE INDEX idx_ratings_created ON ratings(created_at);
+
+-- ============================================================
+-- NOTIFICATIONS
+-- ============================================================
+
+CREATE TABLE notifications (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id         UUID NOT NULL REFERENCES users(id),
+    type            VARCHAR(50) NOT NULL,
+    title           VARCHAR(255) NOT NULL,
+    message         TEXT NOT NULL,
+    data            JSONB,
+    channel         VARCHAR(20) NOT NULL
+                    CHECK (channel IN ('PUSH','SMS','EMAIL','IN_APP')),
+    is_read         BOOLEAN DEFAULT FALSE,
+    read_at         TIMESTAMP,
+    sent_at         TIMESTAMP,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_notifications_user ON notifications(user_id);
+CREATE INDEX idx_notifications_unread ON notifications(user_id, is_read) WHERE is_read = FALSE;
+CREATE INDEX idx_notifications_created ON notifications(created_at);
+
+-- ============================================================
+-- AUDIT LOGS
+-- ============================================================
+
+CREATE TABLE audit_logs (
+    id              BIGSERIAL PRIMARY KEY,
+    user_id         UUID REFERENCES users(id),
+    action          VARCHAR(100) NOT NULL,
+    entity_type     VARCHAR(50) NOT NULL,
+    entity_id       UUID,
+    old_values      JSONB,
+    new_values      JSONB,
+    ip_address      INET,
+    user_agent      TEXT,
+    session_id      VARCHAR(255),
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_user ON audit_logs(user_id);
+CREATE INDEX idx_audit_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX idx_audit_action ON audit_logs(action);
+CREATE INDEX idx_audit_created ON audit_logs(created_at);
+
+-- Partition audit_logs by month for performance
+CREATE TABLE audit_logs_2024_01 PARTITION OF audit_logs
+    FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
+
+-- ============================================================
+-- DELIVERY JOBS
+-- ============================================================
+
+CREATE TABLE delivery_jobs (
+    id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    transaction_id      UUID NOT NULL REFERENCES transactions(id),
+    agent_id            UUID REFERENCES users(id),
+    pickup_address      TEXT NOT NULL,
+    delivery_address    TEXT NOT NULL,
+    pickup_latitude     DECIMAL(10,8),
+    pickup_longitude    DECIMAL(11,8),
+    delivery_latitude   DECIMAL(10,8),
+    delivery_longitude  DECIMAL(11,8),
+    status              VARCHAR(20) NOT NULL DEFAULT 'PENDING'
+                        CHECK (status IN ('PENDING','ACCEPTED','PICKED_UP','IN_TRANSIT','DELIVERED','CANCELLED')),
+    estimated_distance  DECIMAL(10,2),
+    estimated_fee       DECIMAL(15,2),
+    actual_distance     DECIMAL(10,2),
+    actual_fee          DECIMAL(15,2),
+    signature_url       VARCHAR(500),
+    delivery_photo_url  VARCHAR(500),
+    notes               TEXT,
+    created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_delivery_transaction ON delivery_jobs(transaction_id);
+CREATE INDEX idx_delivery_agent ON delivery_jobs(agent_id);
+CREATE INDEX idx_delivery_status ON delivery_jobs(status);
+
+-- ============================================================
+-- WATCHLIST
+-- ============================================================
+
+CREATE TABLE watchlist (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID NOT NULL REFERENCES users(id),
+    listing_id  UUID NOT NULL REFERENCES listings(id),
+    created_at  TIMESTAMP NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, listing_id)
+);
+
+CREATE INDEX idx_watchlist_user ON watchlist(user_id);
+
+-- ============================================================
+-- COMMISSION SETTINGS
+-- ============================================================
+
+CREATE TABLE commission_settings (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    min_amount      DECIMAL(15,2) NOT NULL,
+    max_amount      DECIMAL(15,2),
+    rate_percent    DECIMAL(5,2) NOT NULL,
+    min_fee         DECIMAL(15,2) NOT NULL DEFAULT 200,
+    is_active       BOOLEAN DEFAULT TRUE,
+    effective_from  TIMESTAMP NOT NULL DEFAULT NOW(),
+    effective_until TIMESTAMP,
+    created_by      UUID REFERENCES users(id),
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+-- ============================================================
+-- SYSTEM CONFIG
+-- ============================================================
+
+CREATE TABLE system_config (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    config_key  VARCHAR(100) NOT NULL UNIQUE,
+    config_value TEXT NOT NULL,
+    config_type VARCHAR(20) NOT NULL DEFAULT 'STRING',
+    description TEXT,
+    is_editable BOOLEAN DEFAULT TRUE,
+    updated_by  UUID REFERENCES users(id),
+    updated_at  TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+4.3 DATABASE OPTIMIZATION STRATEGIES
+────────────────────────────────────
+- Partitioning: audit_logs by month, messages by conversation
+- Read Replicas: for search queries and analytics
+- Connection Pooling: HikariCP (max 20 connections per service)
+- Caching: Redis for sessions, hot listings, search results
+- Full-Text Search: Elasticsearch for advanced search
+- Geospatial: PostGIS for location-based queries
+- Soft Deletes: all tables have deleted_at for audit compliance
+- Foreign Keys: all relationships enforced at DB level
+- Check Constraints: data integrity at DB level
+- JSONB: flexible metadata without schema changes
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 5: TECHNOLOGY STACK
+═══════════════════════════════════════════════════════════════════════════════
+
+5.1 BACKEND
+───────────
+Technology          | Version | Purpose
+─────────────────────────────────────────────────────────────
+Java                | 21 LTS  | Primary language (enterprise-grade)
+Spring Boot         | 3.2.x   | Application framework
+Spring Security     | 6.2.x   | Authentication & authorization
+Spring Data JPA     | 3.2.x   | Data access layer
+Spring WebFlux      | 3.2.x   | Reactive programming for high throughput
+Spring Cloud Gateway| 4.1.x   | API Gateway (routing, rate limiting)
+Spring Boot Actuator| 3.2.x   | Health checks, metrics
+MapStruct           | 1.5.x   | DTO mapping (compile-time, type-safe)
+Lombok              | 1.18.x  | Boilerplate reduction
+Jakarta Validation  | 3.0.x   | Input validation
+jjwt                | 0.12.x  | JWT handling
+BCrypt              | built-in| Password hashing (cost 12)
+OWASP Java Encoder  | 1.2.x   | Output encoding (XSS prevention)
+Flyway              | 10.x    | Database migrations
+
+WHY JAVA/SPRING BOOT?
+- Mature ecosystem with excellent security libraries
+- Strong typing prevents runtime errors
+- Excellent concurrency support for high throughput
+- Massive talent pool in Ethiopia (universities teach Java)
+- Spring Security is industry standard for enterprise auth
+- Easy to find developers and maintain long-term
+
+5.2 DATABASE
+────────────
+Technology          | Version | Purpose
+─────────────────────────────────────────────────────────────
+PostgreSQL          | 16.x    | Primary relational database
+PostGIS             | 3.4.x   | Geospatial extensions
+pgcrypto            | built-in| Field-level encryption
+Redis               | 7.2.x   | Sessions, caching, rate limiting
+Elasticsearch       | 8.11.x  | Full-text search, analytics
+MinIO               | latest  | Object storage (S3-compatible)
+
+WHY POSTGRESQL?
+- ACID compliance for financial transactions
+- Excellent geospatial support (PostGIS)
+- JSONB for flexible metadata
+- Strong consistency for escrow/payment data
+- Partitioning support for audit logs
+- Open source, no licensing costs
+
+WHY REDIS?
+- Sub-millisecond latency for sessions
+- Pub/sub for real-time notifications
+- Rate limiting with Redis Lua scripts
+- Distributed locking for idempotency
+
+5.3 MESSAGE QUEUE & EVENTS
+──────────────────────────
+Technology          | Version | Purpose
+─────────────────────────────────────────────────────────────
+Apache Kafka        | 3.6.x   | Event streaming between services
+Kafka Connect       | 3.6.x   | Data integration
+Avro                | 1.11.x  | Schema registry for event contracts
+Debezium            | 2.5.x   | CDC (Change Data Capture) for sync
+
+WHY KAFKA?
+- High throughput (millions of events/sec)
+- Durability and fault tolerance
+- Event sourcing for audit trails
+- Decouples services (payment -> notification)
+- Replay capability for debugging
+
+5.4 FRONTEND
+────────────
+Technology          | Version | Purpose
+─────────────────────────────────────────────────────────────
+React               | 18.x    | Web frontend framework
+TypeScript          | 5.3.x   | Type safety
+Next.js             | 14.x    | SSR, SEO, routing
+Tailwind CSS        | 3.4.x   | Utility-first styling
+shadcn/ui           | latest  | Component library
+React Query         | 5.x     | Server state management
+Zustand             | 4.x     | Client state management
+React Hook Form     | 7.x     | Form handling
+Zod                 | 3.x     | Schema validation
+i18next             | 23.x    | Internationalization (Amharic, etc.)
+React Leaflet       | 4.x     | Map integration
+Recharts            | 2.x     | Data visualization
+
+WHY REACT/NEXT.JS?
+- Excellent developer experience
+- Strong ecosystem and community
+- SSR for SEO (important for marketplace discoverability)
+- Easy to find React developers in Ethiopia
+- TypeScript prevents frontend bugs
+
+5.5 MOBILE APP
+──────────────
+Technology          | Version | Purpose
+─────────────────────────────────────────────────────────────
+Flutter             | 3.19.x  | Cross-platform mobile (Android + iOS)
+Dart                | 3.3.x   | Flutter language
+BLoC Pattern        | 8.x     | State management
+Dio                 | 5.x     | HTTP client
+Hive                | 2.x     | Local database (offline support)
+Firebase Messaging  | latest  | Push notifications
+Google Maps Flutter | latest  | Maps and location
+Image Picker        | latest  | Camera integration
+Local Auth          | latest  | Biometric authentication
+
+WHY FLUTTER OVER REACT NATIVE?
+- Single codebase for Android + iOS
+- Better performance on low-end devices (common in Ethiopia)
+- Smaller app size (critical for limited data plans)
+- Stronger offline support
+- Native feel with custom widgets
+- Hot reload for faster development
+
+5.6 DEVOPS & INFRASTRUCTURE
+─────────────────────────────
+Technology          | Version | Purpose
+─────────────────────────────────────────────────────────────
+Docker              | 24.x    | Containerization
+Docker Compose      | 2.x     | Local development
+Kubernetes          | 1.29.x  | Container orchestration
+Helm                | 3.x     | K8s package management
+Terraform           | 1.7.x   | Infrastructure as Code
+GitHub Actions      | latest  | CI/CD pipeline
+Prometheus          | 2.49.x  | Metrics collection
+Grafana             | 10.x    | Metrics visualization
+ELK Stack           | 8.x     | Log aggregation
+Jaeger              | 1.50.x  | Distributed tracing
+Vault               | 1.15.x  | Secrets management
+Cert-Manager        | latest  | TLS certificate management
+Nginx Ingress       | latest  | K8s ingress controller
+ArgoCD              | latest  | GitOps continuous delivery
+
+WHY KUBERNETES?
+- Auto-scaling based on CPU/memory
+- Self-healing (restart failed pods)
+- Rolling deployments (zero downtime)
+- Resource isolation between services
+- Service discovery and load balancing
+- Industry standard for microservices
+
+5.7 SECURITY TOOLS
+──────────────────
+Technology          | Purpose
+─────────────────────────────────────────────────────────────
+OWASP ZAP           | Automated security testing
+SonarQube           | Static code analysis (SAST)
+Snyk                | Dependency vulnerability scanning
+Trivy               | Container image scanning
+HashiCorp Vault     | Secrets management
+Let's Encrypt       | Free TLS certificates
+Cloudflare WAF      | Web application firewall (DDoS protection)
+Fail2Ban            | Intrusion prevention
+
+5.8 MONITORING & OBSERVABILITY
+────────────────────────────────
+Technology          | Purpose
+─────────────────────────────────────────────────────────────
+Prometheus          | Metrics collection (CPU, memory, requests)
+Grafana             | Dashboards and alerts
+ELK Stack           | Centralized logging
+Jaeger              | Distributed request tracing
+PagerDuty           | Incident alerting
+Uptime Kuma         | External uptime monitoring
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 6: SYSTEM ARCHITECTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+6.1 ARCHITECTURE DECISION: MICROSERVICES
+────────────────────────────────────────
+DECISION: Use Microservices Architecture (not monolith or modular monolith)
+
+REASONING:
+- Each service can scale independently (payment service needs more resources)
+- Different teams can work on different services
+- Technology flexibility (can use different languages if needed)
+- Fault isolation (one service down doesn't bring down everything)
+- Independent deployment (faster release cycles)
+
+TRADE-OFFS:
+- Operational complexity (monitoring, tracing)
+- Network latency between services
+- Data consistency challenges
+- Higher initial development cost
+
+MITIGATION:
+- Use service mesh (Istio) for observability
+- Event-driven architecture for eventual consistency
+- API Gateway for unified client interface
+- Shared libraries for common concerns
+
+6.2 SERVICE DECOMPOSITION
+─────────────────────────
+Service              | Port  | Responsibility
+─────────────────────────────────────────────────────────────
+API Gateway          | 8080  | JWT validation, rate limiting, routing, WAF
+User Service         | 8081  | Auth, KYC, profiles, RBAC, MFA
+Listing Service      | 8082  | CRUD, search, categories, image handling
+Verification Service | 8083  | Agent management, photo checks, GPS
+Messaging Service    | 8084  | Chat, WebSocket, push notifications
+Payment Service      | 8085  | Mock Telebirr, escrow, commission
+Transaction Service  | 8086  | Order state machine, disputes, history
+Delivery Service     | 8087  | Agent matching, GPS tracking, signatures
+Notification Service | 8088  | SMS, push, email templates
+Analytics Service    | 8089  | Reporting, price index, dashboards
+
+6.3 COMMUNICATION PATTERNS
+──────────────────────────
+SYNC (REST/OpenFeign):
+- User Service -> Auth check (immediate response needed)
+- API Gateway -> All services (routing)
+- Payment Service -> Transaction Service (confirm payment)
+
+ASYNC (Kafka Events):
+- User registered -> Notification Service (welcome SMS)
+- Listing created -> Search Service (index), Notification Service (alerts)
+- Payment completed -> Transaction Service (update state), Notification Service
+- Escrow released -> Payment Service (transfer to seller)
+- Verification completed -> Listing Service (add "verified" badge)
+
+CQRS (Command Query Responsibility Segregation):
+- Write: PostgreSQL (ACID transactions)
+- Read: Elasticsearch (search, analytics), Redis (hot data)
+
+6.4 DATA FLOW DIAGRAM
+─────────────────────
+
+    Mobile App      API Gateway       Services
+        |                |                |
+        |--------------->|--------------->|
+        |                |                |
+        |                |         PostgreSQL    Redis    Elasticsearch
+        |                |              |          |            |
+        |                |              |          |            |
+        |                |         Kafka (Events)
+        |                |              |
+
+6.5 FILE STORAGE ARCHITECTURE
+───────────────────────────────
+- MinIO (S3-compatible object storage) for images and documents
+- Image processing pipeline:
+  1. Upload original to MinIO
+  2. Generate thumbnails (200x200, 400x400, 800x800)
+  3. Strip EXIF data for privacy
+  4. Add watermark for copyright
+  5. Store processed images back to MinIO
+  6. Update DB with URLs
+- CDN: Cloudflare or local CDN for image delivery
+- Backup: Daily sync to secondary storage
+
+6.6 SCALABILITY STRATEGIES
+──────────────────────────
+- Horizontal Pod Autoscaling (HPA): 2-20 pods per service
+- Database Read Replicas: 1 primary + 2 read replicas
+- Redis Cluster: 6 nodes (3 masters + 3 replicas)
+- Elasticsearch Cluster: 3 nodes minimum
+- Kafka Cluster: 3 brokers, replication factor 3
+- CDN for static assets and images
+- Database connection pooling (HikariCP)
+- Circuit breakers (Resilience4j) for external calls
+- Bulkhead pattern for resource isolation
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 7: SECURITY
+═══════════════════════════════════════════════════════════════════════════════
+
+7.1 AUTHENTICATION & AUTHORIZATION
+──────────────────────────────────
+- JWT Tokens:
+  - Access token: 15 minutes expiry
+  - Refresh token: 7 days expiry, stored in httpOnly cookie
+  - Algorithm: RS256 (asymmetric, private key on server)
+  - Claims: userId, role, permissions, issuedAt, expiresAt
+
+- Multi-Factor Authentication:
+  - SMS OTP (primary for Ethiopian market)
+  - TOTP (Google Authenticator) as secondary
+  - Mandatory for Admin/SuperAdmin roles
+  - Optional for Seller roles (recommended)
+
+- Session Management:
+  - Redis-backed sessions
+  - Session invalidation on password change
+  - Concurrent session limit (max 3 per user)
+  - Device fingerprinting for anomaly detection
+
+7.2 ENCRYPTION
+──────────────
+- In Transit: TLS 1.3 minimum, HSTS enabled
+- At Rest:
+  - Database: AES-256-GCM (pgcrypto extension)
+  - File Storage: Server-side encryption (MinIO)
+  - Backups: Encrypted before upload
+- Field-Level:
+  - Phone numbers: AES-256-GCM
+  - Bank details: AES-256-GCM
+  - ID numbers: AES-256-GCM
+  - KYC documents: AES-256-GCM
+- Passwords: BCrypt with cost factor 12
+- API Keys: SHA-256 hashed in database
+
+7.3 API SECURITY
+────────────────
+- Rate Limiting:
+  - Guest: 30 req/min per IP
+  - Authenticated: 100 req/min per user
+  - Payment endpoints: 10 req/min per user
+  - Admin endpoints: 50 req/min per admin
+
+- Input Validation:
+  - Jakarta Validation on all DTOs
+  - SQL injection prevention (parameterized queries)
+  - XSS prevention (OWASP Java Encoder)
+  - CSRF tokens for state-changing operations
+  - File upload restrictions (images only, max 5MB)
+
+- Output Encoding:
+  - All user-generated content encoded before display
+  - Content Security Policy (CSP) headers
+  - X-Frame-Options: DENY
+  - X-Content-Type-Options: nosniff
+
+7.4 AUDIT & COMPLIANCE
+──────────────────────
+- Immutable Audit Logs:
+  - Who, what, when, from which IP
+  - 7-year retention (tax/legal compliance)
+  - Separate database, write-once access
+  - Partitioned by month for performance
+
+- Data Protection (Ethiopian ECA compliance):
+  - Consent management for data collection
+  - Right to access (user can download their data)
+  - Right to deletion (soft delete with 30-day grace)
+  - Data minimization (collect only what's needed)
+  - Breach notification within 72 hours
+
+7.5 DISASTER RECOVERY
+─────────────────────
+- Backup Strategy:
+  - Database: Every 6 hours (incremental), daily (full)
+  - Files: Every 24 hours
+  - Retention: 30 days local, 90 days offsite
+  - Test restore: Monthly
+
+- RTO/RPO:
+  - Recovery Time Objective (RTO): < 4 hours
+  - Recovery Point Objective (RPO): < 1 hour
+
+- Multi-Region:
+  - Primary: Addis Ababa (Ethio Telecom Cloud)
+  - Secondary: Hawassa (async replication)
+  - Failover: Manual with automated scripts
+
+7.6 OWASP TOP 10 MITIGATION
+─────────────────────────────
+A01: Broken Access Control    -> RBAC + JWT validation + API Gateway
+A02: Cryptographic Failures   -> AES-256-GCM + TLS 1.3 + BCrypt
+A03: Injection                -> Parameterized queries + ORM
+A04: Insecure Design          -> Threat modeling + security review
+A05: Security Misconfiguration-> Immutable infrastructure + config validation
+A06: Vulnerable Components    -> Snyk/Dependabot scanning
+A07: Auth Failures            -> MFA + session management + lockout
+A08: Data Integrity Failures  -> Digital signatures + checksums
+A09: Logging Failures         -> Centralized logging + tamper detection
+A10: SSRF                     -> URL validation + network policies
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 8: UI/UX STRUCTURE
+═══════════════════════════════════════════════════════════════════════════════
+
+8.1 DESIGN SYSTEM
+─────────────────
+- Design Language: Clean, professional, construction-industry appropriate
+- Color Palette:
+  - Primary: #1E3A5F (deep blue - trust, professionalism)
+  - Secondary: #E8B931 (gold - quality, premium)
+  - Success: #28A745 (green - verified, available)
+  - Warning: #FFC107 (amber - pending, caution)
+  - Danger: #DC3545 (red - dispute, expired)
+  - Neutral: #F5F5F5 (light gray - backgrounds)
+
+- Typography:
+  - Primary: Inter (Latin) + Noto Sans Ethiopic (Amharic)
+  - Headings: 24px/32px/40px
+  - Body: 16px
+  - Small: 14px
+
+- Spacing: 8px base grid system
+- Border Radius: 8px (cards), 4px (buttons), 16px (modals)
+- Shadows: 0 2px 8px rgba(0,0,0,0.08) (subtle elevation)
+
+8.2 PAGE STRUCTURE
+──────────────────
+
+PUBLIC PAGES:
+Page              | Components
+─────────────────────────────────────────────────────────────
+Home              | Hero banner, featured listings, categories, how-it-works
+Browse Listings   | Search bar, filters (sidebar), listing grid, map view
+Listing Detail    | Image gallery, specs, seller info, contact button
+Seller Profile    | Avatar, ratings, listings, verification badge
+About Us          | Mission, team, partners, press
+Contact           | Form, map, phone, email
+FAQ               | Accordion, search
+
+BUYER DASHBOARD:
+Page              | Components
+─────────────────────────────────────────────────────────────
+Browse/Search     | Search, filters, sort, listing cards, pagination
+Listing Detail    | Gallery, specs, seller card, chat button, buy button
+My Watchlist      | Saved listings, price alerts, remove button
+My Conversations  | Chat list, message thread, attachment upload
+My Orders         | Order list, status badges, tracking, receipts
+Payment           | Mock payment UI, QR code, confirmation animation
+Profile           | Edit profile, KYC upload, preferences
+Notifications     | Notification list, mark read, settings
+
+SELLER DASHBOARD:
+Page              | Components
+─────────────────────────────────────────────────────────────
+My Listings       | Listing table, status badges, analytics, actions
+Create Listing    | Multi-step form, image upload, preview, publish
+Edit Listing      | Same as create, pre-filled data
+Sales Analytics   | Revenue chart, views chart, conversion rate
+Incoming Orders   | Order cards, accept/reject buttons, ship button
+Escrow Status     | Escrow table, release status, countdown timer
+Verification      | Request form, status tracker, agent info
+Profile           | Company info, ratings, verification badge
+
+ADMIN DASHBOARD:
+Page              | Components
+─────────────────────────────────────────────────────────────
+User Management   | User table, filters, suspend/activate, role change
+Listing Moderation| Listing queue, approve/reject/flag, bulk actions
+Transactions      | Transaction table, dispute resolution, refunds
+Verification Queue| Inspection queue, assign agent, review reports
+Analytics         | KPI cards, charts, date range picker, export
+Audit Logs        | Searchable log table, filters, export
+System Config     | Feature flags, commission rates, notification templates
+
+8.3 RESPONSIVE BREAKPOINTS
+──────────────────────────
+- Mobile: 320px - 767px (single column, bottom nav)
+- Tablet: 768px - 1023px (two columns, side nav)
+- Desktop: 1024px+ (three columns, top nav + sidebar)
+
+8.4 ACCESSIBILITY
+─────────────────
+- WCAG 2.1 AA compliance
+- Keyboard navigation support
+- Screen reader compatibility
+- Color contrast ratio 4.5:1 minimum
+- Focus indicators on all interactive elements
+- Alt text for all images
+- ARIA labels for dynamic content
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 9: DEVELOPMENT ROADMAP
+═══════════════════════════════════════════════════════════════════════════════
+
+PHASE 0: FOUNDATION (Weeks 1-4)
+─────────────────────────────────
+GOALS:
+- Legal entity registration
+- Team hiring and onboarding
+- Infrastructure setup
+- Design system creation
+
+FEATURES:
+- Company registration (Ethiopia)
+- TIN and business license acquisition
+- Team: 1 Tech Lead, 1 Backend Dev, 1 Mobile Dev, 1 UI/UX Designer
+- Design system and component library
+- CI/CD pipeline setup
+- Development environment (Docker Compose)
+
+DATABASE CHANGES:
+- Create all core tables
+- Set up Flyway migrations
+- Seed categories and locations
+
+API ENDPOINTS:
+- Health check endpoints
+- Basic auth endpoints (register/login)
+
+UI PAGES:
+- Design system documentation
+- Wireframes for all screens
+
+TESTING:
+- Unit test framework setup
+- Integration test framework setup
+- Code quality gates (SonarQube)
+
+DELIVERABLES:
+- Registered company
+- Working dev environment
+- Design system v1
+- CI/CD pipeline
+
+DEFINITION OF DONE:
+- All team members onboarded
+- Dev environment runs with one command
+- Design system has 20+ components
+- CI/CD builds and deploys successfully
+
+RISKS:
+- Hiring delays -> Mitigation: Start recruitment early, use contractors
+- Legal delays -> Mitigation: Hire local legal consultant
+
+─────────────────────────────────────────────────────────────────────────────
+
+PHASE 1: MVP CORE (Weeks 5-12)
+──────────────────────────────
+GOALS:
+- Working marketplace with listings and search
+- User authentication and profiles
+- Basic messaging
+- Mock payment system
+- Admin dashboard
+
+FEATURES:
+- User registration and login (phone + password)
+- KYC document upload
+- Listing creation with photos
+- Full-text search with filters
+- Real-time messaging
+- Mock Telebirr payment gateway
+- Escrow state machine
+- Commission calculation
+- Admin dashboard (users, listings, transactions)
+
+DATABASE CHANGES:
+- All tables from schema
+- Indexes for performance
+- Seed data for categories
+
+API ENDPOINTS:
+- POST /api/v1/auth/register
+- POST /api/v1/auth/login
+- POST /api/v1/auth/refresh
+- GET /api/v1/users/me
+- PUT /api/v1/users/me
+- POST /api/v1/listings
+- GET /api/v1/listings
+- GET /api/v1/listings/{id}
+- PUT /api/v1/listings/{id}
+- DELETE /api/v1/listings/{id}
+- GET /api/v1/listings/search
+- POST /api/v1/conversations
+- GET /api/v1/conversations/{id}/messages
+- POST /api/v1/conversations/{id}/messages
+- POST /api/v1/transactions
+- GET /api/v1/transactions/{id}
+- PUT /api/v1/transactions/{id}/accept
+- POST /api/v1/payments/initiate
+- POST /api/v1/payments/{id}/confirm
+- GET /api/v1/payments/{id}/status
+- GET /api/v1/admin/users
+- GET /api/v1/admin/listings
+- GET /api/v1/admin/transactions
+
+UI PAGES:
+- Home page
+- Browse listings
+- Listing detail
+- Create listing
+- My listings (seller)
+- My conversations
+- My transactions
+- Mock payment screen
+- Admin dashboard
+- Profile settings
+
+TESTING:
+- Unit tests: 70% coverage minimum
+- Integration tests for all API endpoints
+- End-to-end tests for critical user flows
+- Security testing (OWASP ZAP)
+- Load testing (100 concurrent users)
+
+DELIVERABLES:
+- Working web app
+- Working mobile app (basic)
+- Admin dashboard
+- Docker Compose for local dev
+- API documentation (OpenAPI)
+
+DEFINITION OF DONE:
+- User can register, login, create listing, search, message, pay (mock)
+- Admin can moderate users and listings
+- All P0 features working
+- 70% test coverage
+- Security scan passes
+
+RISKS:
+- Payment integration complexity -> Mitigation: Mock gateway first
+- Search performance -> Mitigation: Elasticsearch from day one
+
+─────────────────────────────────────────────────────────────────────────────
+
+PHASE 2: TRUST & SCALE (Weeks 13-20)
+────────────────────────────────────
+GOALS:
+- Verification system
+- Rating and review system
+- Advanced notifications
+- Mobile app polish
+- Performance optimization
+
+FEATURES:
+- Verification agent network
+- Listing verification workflow
+- Rating and review system
+- Push notifications (FCM)
+- SMS notifications
+- Email notifications
+- Watchlist/favorites
+- Seller analytics dashboard
+- Image optimization pipeline
+- CDN integration
+
+DATABASE CHANGES:
+- verification_requests table
+- ratings table
+- notifications table
+- watchlist table
+
+API ENDPOINTS:
+- POST /api/v1/verification/request
+- GET /api/v1/verification/{id}
+- POST /api/v1/verification/{id}/submit
+- POST /api/v1/ratings
+- GET /api/v1/ratings/{userId}
+- GET /api/v1/notifications
+- PUT /api/v1/notifications/{id}/read
+- POST /api/v1/watchlist
+- GET /api/v1/watchlist
+- DELETE /api/v1/watchlist/{id}
+
+UI PAGES:
+- Verification request form
+- Verification status tracker
+- Rating modal
+- Notification center
+- Watchlist page
+- Seller analytics
+- Mobile app v1 (full features)
+
+TESTING:
+- Unit tests: 75% coverage
+- Integration tests for new endpoints
+- Mobile app testing (device lab)
+- Performance testing (500 concurrent users)
+
+DELIVERABLES:
+- Verification system operational
+- Rating system live
+- Mobile app on Play Store
+- Performance benchmarks met
+
+DEFINITION OF DONE:
+- Verification agents can inspect and approve listings
+- Users can rate and review after transactions
+- Notifications delivered reliably
+- Mobile app passes QA
+
+RISKS:
+- Agent recruitment -> Mitigation: Partner with logistics companies
+- Notification delivery -> Mitigation: Multi-channel fallback
+
+─────────────────────────────────────────────────────────────────────────────
+
+PHASE 3: PAYMENT & LOGISTICS (Weeks 21-28)
+──────────────────────────────────────────
+GOALS:
+- Real payment integration (Telebirr)
+- Delivery agent network
+- Price index
+- Bulk subscriptions
+
+FEATURES:
+- Real Telebirr API integration
+- Delivery agent matching
+- GPS tracking
+- Digital signatures
+- Price index dashboard
+- Bulk dealer subscriptions
+- CSV/API bulk upload
+- Advanced analytics
+
+DATABASE CHANGES:
+- delivery_jobs table
+- commission_settings table
+- subscription_plans table
+
+API ENDPOINTS:
+- POST /api/v1/payments/telebirr/initiate
+- POST /api/v1/payments/telebirr/callback
+- POST /api/v1/delivery/request
+- GET /api/v1/delivery/agents/nearby
+- PUT /api/v1/delivery/{id}/accept
+- PUT /api/v1/delivery/{id}/pickup
+- PUT /api/v1/delivery/{id}/deliver
+- GET /api/v1/analytics/price-index
+- GET /api/v1/analytics/market-insights
+
+UI PAGES:
+- Real payment flow
+- Delivery tracking map
+- Price index page
+- Subscription plans
+- Bulk upload interface
+
+TESTING:
+- Unit tests: 80% coverage
+- Payment integration tests
+- Delivery flow end-to-end tests
+- Security penetration test
+- Load testing (1000 concurrent users)
+
+DELIVERABLES:
+- Real payment processing
+- Delivery network operational
+- Price index live
+- Subscription revenue started
+
+DEFINITION OF DONE:
+- Real payments process successfully
+- Delivery agents complete jobs end-to-end
+- Price index updates daily
+- Subscription revenue > 0
+
+RISKS:
+- Telebirr API delays -> Mitigation: Maintain mock as fallback
+- Delivery agent quality -> Mitigation: Rating system, penalties
+
+─────────────────────────────────────────────────────────────────────────────
+
+PHASE 4: AI & ENTERPRISE (Weeks 29-36)
+──────────────────────────────────────
+GOALS:
+- AI-powered features
+- Enterprise API
+- Multi-city expansion
+- Advanced analytics
+
+FEATURES:
+- AI price recommendation
+- Image quality scoring
+- Smart matching algorithm
+- Chat sentiment analysis
+- Fraud detection
+- Enterprise API access
+- White-label options
+- Multi-tenancy support
+- Advanced reporting
+
+DATABASE CHANGES:
+- ml_models table
+- api_keys table
+- enterprise_accounts table
+
+API ENDPOINTS:
+- POST /api/v1/ai/price-recommendation
+- POST /api/v1/ai/image-quality
+- GET /api/v1/ai/matching
+- POST /api/v1/enterprise/upload
+- GET /api/v1/enterprise/analytics
+
+UI PAGES:
+- AI price suggestion (in listing creation)
+- Enterprise dashboard
+- API documentation
+- Advanced analytics
+
+TESTING:
+- Unit tests: 85% coverage
+- AI model accuracy testing
+- API load testing (5000 concurrent users)
+- Security audit
+
+DELIVERABLES:
+- AI features operational
+- Enterprise API live
+- Multi-city presence
+- Advanced analytics dashboard
+
+DEFINITION OF DONE:
+- AI recommendations accepted by users > 60%
+- Enterprise API has 10+ customers
+- 3+ cities operational
+
+RISKS:
+- AI accuracy -> Mitigation: Continuous training, human oversight
+- Enterprise sales -> Mitigation: Dedicated sales team
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 10: TESTING STRATEGY
+═══════════════════════════════════════════════════════════════════════════════
+
+10.1 TESTING PYRAMID
+────────────────────
+        /       /  \     E2E Tests (5%)
+      /----     /      \   Integration Tests (15%)
+    /--------   /          \ Unit Tests (80%)
+  /------------
+10.2 UNIT TESTING
+─────────────────
+Framework: JUnit 5 + Mockito + AssertJ
+Coverage Target: 80% minimum
+Focus Areas:
+- Service layer business logic
+- Domain models and validation
+- Utility classes
+- Security components (JWT, encryption)
+- Commission calculation
+- Escrow state machine transitions
+
+Example Test Cases:
+- User registration with valid/invalid phone
+- Password strength validation
+- JWT token generation and validation
+- Escrow state transitions (all paths)
+- Commission calculation for various amounts
+- Listing expiration logic
+
+10.3 INTEGRATION TESTING
+────────────────────────
+Framework: Spring Boot Test + TestContainers
+Coverage Target: All API endpoints
+Focus Areas:
+- Database operations (CRUD)
+- API endpoint contracts
+- Service-to-service communication
+- Kafka event publishing/consuming
+- File upload/download
+- Payment gateway integration
+
+Example Test Cases:
+- Create listing -> verify in DB -> verify in search index
+- Payment flow: initiate -> confirm -> escrow created
+- User registration -> welcome email sent
+- Message sent -> real-time delivery via WebSocket
+
+10.4 END-TO-END TESTING
+───────────────────────
+Framework: Cypress (web) + Appium (mobile)
+Coverage Target: All critical user journeys
+Focus Areas:
+- User registration and login
+- Listing creation to sale completion
+- Payment flow (mock)
+- Messaging between buyer and seller
+- Admin moderation workflows
+
+Example Test Cases:
+- Guest browses -> registers -> creates listing -> another user buys -> payment -> escrow release
+- Seller creates listing -> verification requested -> agent inspects -> approved -> buyer purchases
+- User registers -> MFA setup -> login with MFA -> access protected resources
+
+10.5 PERFORMANCE TESTING
+────────────────────────
+Framework: k6 + Gatling
+Scenarios:
+- Load Test: 1000 concurrent users, sustained for 1 hour
+- Stress Test: Ramp up to 5000 users, measure degradation
+- Spike Test: Sudden 10x traffic increase
+- Soak Test: 24-hour sustained load
+
+Metrics:
+- Response time p50 < 200ms, p95 < 500ms, p99 < 1000ms
+- Error rate < 0.1%
+- Throughput > 1000 req/sec
+- Database CPU < 70%
+
+10.6 SECURITY TESTING
+─────────────────────
+Tools: OWASP ZAP, Burp Suite, SonarQube
+Tests:
+- SQL injection on all input fields
+- XSS on all user-generated content
+- CSRF token validation
+- JWT token manipulation
+- Rate limiting bypass attempts
+- File upload vulnerabilities
+- Authentication bypass attempts
+- Authorization escalation tests
+
+10.7 LOAD TESTING
+─────────────────
+Framework: k6
+Scenarios:
+- Browse listings: 500 req/sec
+- Search: 200 req/sec
+- Login: 100 req/sec
+- Payment: 50 req/sec
+- Messaging: 1000 concurrent WebSocket connections
+
+10.8 USER ACCEPTANCE TESTING (UAT)
+──────────────────────────────────
+Participants: 20 real contractors (10 buyers, 10 sellers)
+Duration: 2 weeks
+Tasks:
+- Register and complete KYC
+- Create a listing with photos
+- Search and find a listing
+- Initiate chat and negotiate
+- Complete a mock transaction
+- Rate the other party
+- Use admin dashboard (for internal team)
+
+Success Criteria:
+- 90% of users complete tasks without assistance
+- NPS score > 50
+- Zero critical bugs
+- < 5 major bugs
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 11: PERFORMANCE OPTIMIZATION
+═══════════════════════════════════════════════════════════════════════════════
+
+11.1 CACHING STRATEGY
+─────────────────────
+Layer 1: Browser Cache (static assets, images)
+Layer 2: CDN Cache (images, static content)
+Layer 3: Redis Cache (sessions, hot listings, search results)
+Layer 4: Application Cache (in-memory, computed data)
+Layer 5: Database Cache (query results, connection pool)
+
+Cache Keys:
+- listings:hot:{category} -> Top 100 listings per category
+- listings:detail:{id} -> Listing details (TTL: 5 min)
+- search:results:{hash} -> Search results (TTL: 2 min)
+- user:profile:{id} -> User profile (TTL: 10 min)
+- categories:all -> All categories (TTL: 1 hour)
+
+Cache Invalidation:
+- Write-through: Update cache on DB write
+- TTL-based: Automatic expiration
+- Event-driven: Kafka events trigger cache invalidation
+
+11.2 DATABASE OPTIMIZATION
+──────────────────────────
+- Indexes: All foreign keys, search fields, sort fields
+- Partitioning: audit_logs by month, messages by conversation
+- Query Optimization: EXPLAIN ANALYZE on slow queries
+- Connection Pooling: HikariCP (max 20 connections)
+- Read Replicas: 2 replicas for read-heavy workloads
+- Query Result Caching: Redis for frequent queries
+- Batch Operations: Bulk inserts/updates where possible
+
+11.3 IMAGE OPTIMIZATION
+───────────────────────
+- Format: WebP with JPEG fallback
+- Compression: 80% quality for photos, 90% for thumbnails
+- Responsive Images: Multiple sizes (200px, 400px, 800px)
+- Lazy Loading: Images load on scroll
+- CDN: Cloudflare or local CDN for global delivery
+- Watermark: Automatic watermark on upload
+
+11.4 BACKGROUND JOBS
+────────────────────
+Framework: Quartz Scheduler + Spring Batch
+Jobs:
+- Listing expiration check (every hour)
+- Escrow auto-refund (daily at midnight)
+- Commission calculation (daily)
+- Reconciliation report generation (daily)
+- Image processing (on upload)
+- Notification batch sending (every 5 minutes)
+- Audit log archiving (monthly)
+- Database backup (every 6 hours)
+
+11.5 QUERY OPTIMIZATION
+───────────────────────
+- N+1 Query Prevention: JOIN FETCH, EntityGraph
+- Pagination: Cursor-based for large datasets
+- Projection: Select only needed columns
+- Batch Fetching: @BatchSize on collections
+- Native Queries: For complex aggregations
+- Materialized Views: For analytics dashboards
+
+11.6 HORIZONTAL SCALING
+───────────────────────
+- Kubernetes HPA: 2-20 pods per service
+- Database Sharding: By user ID for future scale
+- Read Replicas: 1 primary + N replicas
+- CDN: Global edge caching
+- Message Queue: Kafka partitioning by key
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 12: DEPLOYMENT
+═══════════════════════════════════════════════════════════════════════════════
+
+12.1 ENVIRONMENTS
+─────────────────
+Development:
+- Local Docker Compose
+- Hot reload enabled
+- Mock external services
+- In-memory databases (optional)
+
+Staging:
+- Kubernetes cluster (1 node)
+- Production-like data (anonymized)
+- All external services (test credentials)
+- Automated deployments from develop branch
+
+Production:
+- Kubernetes cluster (3+ nodes)
+- Real data
+- All external services (production credentials)
+- Manual deployment approval required
+
+12.2 CI/CD PIPELINE
+───────────────────
+GitHub Actions Workflow:
+1. Code Push -> Trigger build
+2. Compile + Unit Tests -> Must pass
+3. SonarQube Analysis -> Quality gate
+4. Security Scan (Snyk) -> No critical vulnerabilities
+5. Build Docker Image -> Push to registry
+6. Deploy to Staging -> Automated
+7. Integration Tests -> Must pass
+8. Performance Tests -> Must meet benchmarks
+9. Manual Approval -> For production
+10. Deploy to Production -> Blue-green deployment
+11. Smoke Tests -> Verify deployment
+12. Rollback (if needed) -> Automated
+
+12.3 DOCKER SETUP
+─────────────────
+Each service has:
+- Dockerfile (multi-stage build)
+- docker-compose.yml (local dev)
+- health check endpoint
+- non-root user
+- resource limits
+
+12.4 KUBERNETES MANIFESTS
+───────────────────────────
+Per service:
+- Deployment (replicas, resource limits, probes)
+- Service (ClusterIP for internal, LoadBalancer for gateway)
+- ConfigMap (environment variables)
+- Secret (sensitive data, mounted from Vault)
+- HPA (auto-scaling rules)
+- NetworkPolicy (micro-segmentation)
+
+12.5 MONITORING
+───────────────
+- Prometheus: Metrics collection
+- Grafana: Dashboards (per service, per cluster)
+- Alerts: PagerDuty for critical issues
+- Uptime: Uptime Kuma for external monitoring
+- Logs: ELK Stack for centralized logging
+- Tracing: Jaeger for distributed tracing
+
+12.6 BACKUP STRATEGY
+────────────────────
+- Database: Every 6 hours (incremental), daily (full)
+- Files: Every 24 hours
+- Retention: 30 days local, 90 days offsite
+- Test Restore: Monthly
+- Encryption: All backups encrypted before storage
+
+12.7 ROLLBACK STRATEGY
+──────────────────────
+- Blue-Green Deployment: Instant rollback by switching traffic
+- Database Migrations: Backward-compatible (expand-contract pattern)
+- Feature Flags: Disable problematic features without deployment
+- Canary Releases: 5% -> 25% -> 50% -> 100% traffic
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 13: FUTURE ROADMAP
+═══════════════════════════════════════════════════════════════════════════════
+
+13.1 AI FEATURES
+────────────────
+- AI Price Recommendation: Suggest optimal listing prices
+- Image Quality Scoring: Auto-grade listing photos
+- Smart Matching: AI-powered buyer-seller matching
+- Chat Sentiment Analysis: Detect disputes early
+- Fraud Detection: Anomaly detection on transactions
+- Demand Forecasting: Predict material demand by region
+- Voice Search: Amharic voice commands
+- OCR for Documents: Auto-extract KYC document data
+
+13.2 AUTOMATION
+───────────────
+- Auto-listing renewal (with seller approval)
+- Auto-price adjustment based on market data
+- Auto-verification for trusted sellers
+- Auto-dispute resolution for clear-cut cases
+- Auto-refund on delivery timeout
+- Auto-commission calculation and payout
+
+13.3 THIRD-PARTY INTEGRATIONS
+───────────────────────────────
+- Telebirr API (real payment processing)
+- Ethio Telecom SMS API
+- Google Maps API (geocoding, directions)
+- SendGrid/Amazon SES (email)
+- Firebase Cloud Messaging (push notifications)
+- Slack/Teams (admin alerts)
+- QuickBooks/Xero (accounting integration)
+- Ethiopian Revenue and Customs Authority (tax reporting)
+
+13.4 MOBILE APPLICATIONS
+──────────────────────
+- iOS App (Flutter)
+- Android App (Flutter)
+- Tablet-optimized layouts
+- Wearable support (smartwatch notifications)
+- Offline-first architecture
+- Background sync
+- Biometric authentication
+
+13.5 PUBLIC APIs
+────────────────
+- REST API v1 (current)
+- GraphQL API (future)
+- Webhook support for enterprise customers
+- API rate limiting and quotas
+- API documentation (Swagger/OpenAPI)
+- SDK for enterprise integration
+
+13.6 ENTERPRISE FEATURES
+────────────────────────
+- Multi-tenancy support
+- White-label options
+- Advanced analytics and reporting
+- Custom integrations
+- Dedicated support
+- SLA guarantees
+- On-premise deployment option
+
+13.7 MULTI-TENANCY
+──────────────────
+- Tenant isolation at database level
+- Custom branding per tenant
+- Tenant-specific configurations
+- Tenant-specific analytics
+- Cross-tenant analytics (admin only)
+
+13.8 INTERNATIONALIZATION
+─────────────────────────
+- Languages: English, Amharic, Oromiffa, Tigrinya
+- RTL support (for future Arabic expansion)
+- Currency: ETB (primary), USD (for international buyers)
+- Time zones: East Africa Time (EAT)
+- Date formats: Ethiopian calendar support
+- Number formats: Local conventions
+
+13.9 ADVANCED ANALYTICS
+───────────────────────
+- Real-time dashboards
+- Predictive analytics
+- Cohort analysis
+- Funnel analysis
+- A/B testing framework
+- Custom report builder
+- Data export (CSV, Excel, PDF)
+- API access to analytics data
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 14: PROJECT MANAGEMENT
+═══════════════════════════════════════════════════════════════════════════════
+
+14.1 TEAM STRUCTURE
+───────────────────
+Phase 1 (Months 1-3): Core Team (~5 people)
+- 1 Technical Lead / CTO (full-stack, security-aware)
+- 1 Backend Developer (Java Spring Boot)
+- 1 Mobile Developer (Flutter)
+- 1 UI/UX Designer (mobile-first, Amharic-capable)
+- 1 Operations Manager (agent hiring, customer support, legal)
+- Budget: ~150,000 ETB/month salaries + office
+
+Phase 2 (Months 4-9): Growth Team (~10 people)
+- Add: 1 DevOps Engineer
+- Add: 1 QA/Security Engineer
+- Add: 1 Data Analyst
+- Add: 2 Verification Agent Coordinators
+- Add: 1 Marketing/Sales Lead
+- Budget: ~350,000 ETB/month
+
+Phase 3 (Months 10-18): Scale Team (~20 people)
+- Add: 2 more backend developers
+- Add: 1 mobile developer
+- Add: 1 Product Manager
+- Add: 3 Customer Support (Amharic, Oromiffa, English)
+- Add: 5 Verification Agents (per city)
+- Add: 2 Delivery Agent Coordinators
+- Budget: ~700,000 ETB/month
+
+14.2 SPRINT STRUCTURE
+─────────────────────
+- Sprint Duration: 2 weeks
+- Sprint Planning: Monday (4 hours)
+- Daily Standup: 15 minutes
+- Sprint Review: Friday (2 hours)
+- Sprint Retrospective: Friday (1 hour)
+- Backlog Refinement: Wednesday (2 hours)
+
+14.3 VERSION CONTROL
+────────────────────
+- GitHub (private repository)
+- Branching Strategy: GitFlow
+  - main: Production code
+  - develop: Integration branch
+  - feature/*: Feature branches
+  - release/*: Release branches
+  - hotfix/*: Emergency fixes
+- Pull Requests: Mandatory code review (2 approvals)
+- Commit Messages: Conventional Commits format
+- Semantic Versioning: MAJOR.MINOR.PATCH
+
+14.4 CODE REVIEW PROCESS
+────────────────────────
+- All code changes via Pull Request
+- Minimum 2 approvals required
+- Automated checks must pass (tests, linting, security scan)
+- Security-sensitive changes require security team approval
+- Documentation updates required for API changes
+- Performance impact assessment for DB changes
+
+14.5 DOCUMENTATION
+──────────────────
+- API Documentation: OpenAPI 3.0 + Swagger UI
+- Architecture Decision Records (ADRs)
+- Runbooks for operations
+- Onboarding documentation
+- Security policies and procedures
+- Incident response playbooks
+
+14.6 RELEASE MANAGEMENT
+─────────────────────────
+- Release Cycle: Monthly (major), Bi-weekly (minor), As-needed (hotfix)
+- Release Notes: Generated from commit messages
+- Change Log: Maintained in CHANGELOG.md
+- Communication: Slack #releases channel + email
+- Rollback Plan: Documented for every release
+- Post-Release Monitoring: 24-hour watch period
+
+14.7 RISK MANAGEMENT
+────────────────────
+Risk Register:
+| Risk | Probability | Impact | Mitigation |
+|------|-------------|--------|------------|
+| Key developer leaves | Medium | High | Knowledge sharing, documentation |
+| Security breach | Low | Critical | Security audits, incident response plan |
+| Telebirr API delay | High | High | Mock gateway, alternative payment |
+| Low user adoption | Medium | High | Free listings Phase 1, marketing |
+| Regulatory changes | Medium | Medium | Legal consultant, compliance team |
+| Infrastructure failure | Low | High | Multi-region, backups, DR plan |
+
+14.8 SUCCESS METRICS
+────────────────────
+Technical:
+- Uptime: 99.9%
+- Response Time: p95 < 500ms
+- Error Rate: < 0.1%
+- Test Coverage: > 80%
+- Deployment Frequency: Daily
+- Lead Time: < 1 week
+- MTTR: < 4 hours
+
+Business:
+- Registered Users: 10,000 by month 6
+- Active Listings: 1,000 by month 6
+- Completed Transactions: 500 by month 12
+- Revenue: 1,325,000 ETB/month by month 12
+- NPS Score: > 50
+- Verification Rate: > 60% of listings
+
+═══════════════════════════════════════════════════════════════════════════════
+                              END OF DOCUMENT
+═══════════════════════════════════════════════════════════════════════════════
+
+This document serves as the complete blueprint for building SurplusSell as a
+production-ready, scalable, and secure marketplace platform for the Ethiopian
+construction industry.
+
+Key Principles:
+1. Security First: Built into every layer, not bolted on later
+2. Trust is Everything: Verification agents + escrow + ratings = competitive moat
+3. Start Small, Think Big: MVP in 12 weeks, full platform in 36 weeks
+4. Ethiopian Market Focus: Amharic-first, offline-capable, low-data usage
+5. Compliance Ready: All audit trails, data protection, financial controls
+
+Next Steps:
+1. Review and approve this plan
+2. Begin Phase 0 (Foundation)
+3. Set up development environment
+4. Start building the core services
+
+For questions or clarifications, contact the Technical Lead.
+
+Document Version: 1.0
+Last Updated: 2026-07-21
+Classification: Internal Use Only
